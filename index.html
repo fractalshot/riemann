@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Riemann-nullen &amp; priemtelfunctie</title>
+<style>
+:root{--bg:#0f1218;--panel:#171c26;--fg:#e6e9ef;--mut:#8b94a7;--grid:#2a3242;--acc:#ffb454;--zero:#5ec8ff;--zeroc:#2a6a8c;--pi:#e6e9ef;--approx:#ff6b8b;--crit:#7be07b}
+@media (prefers-color-scheme:light){:root{--bg:#f4f5f8;--panel:#fff;--fg:#1b2030;--mut:#5d6578;--grid:#dde1ea;--acc:#c46a00;--zero:#0a74b5;--zeroc:#9cc7e0;--pi:#1b2030;--approx:#d6204a;--crit:#2a9d2a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,sans-serif}
+header{padding:14px 16px 4px}
+h1{margin:0;font-size:19px}
+header p{margin:4px 0 0;color:var(--mut);max-width:90ch}
+main{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:12px;padding:12px 16px 16px}
+@media(max-width:820px){main{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--grid);border-radius:10px;padding:10px}
+.card h2{margin:0 0 6px;font-size:13px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+canvas{width:100%;display:block;border-radius:6px;touch-action:none}
+#plane{height:520px;cursor:grab}#plane.drag{cursor:grabbing}
+#pi{height:520px}
+.row{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-top:8px;color:var(--mut)}
+.row label{display:flex;align-items:center;gap:6px}
+input[type=range]{accent-color:var(--acc)}
+button{background:var(--panel);color:var(--fg);border:1px solid var(--grid);border-radius:6px;padding:4px 10px;cursor:pointer}
+button:hover{border-color:var(--acc)}
+.val{color:var(--fg);font-variant-numeric:tabular-nums;min-width:5ch;display:inline-block}
+.leg span{display:inline-flex;align-items:center;gap:5px;margin-right:12px}
+.leg i{width:14px;height:3px;display:inline-block;border-radius:2px}
+</style>
+</head>
+<body>
+<header>
+<h1>Riemann-nullen &amp; de priemtelfunctie π(x)</h1>
+<p>Links: de eerste 100 niet-triviale nullen ρ = ½ + iγ in het complexe vlak (plus hun spiegelbeeld). <b>Sleep</b> het vlak om alle nullen te verschuiven (Re en Im). Rechts: de echte π(x) (trap) en de benadering uit Riemanns expliciete formule met de verschoven nullen.</p>
+</header>
+<main>
+<section class="card">
+<h2>Complex vlak</h2>
+<canvas id="plane"></canvas>
+<div class="row">
+<span>Offset Re: <span class="val" id="oRe">0.000</span></span>
+<span>Im: <span class="val" id="oIm">0.00</span></span>
+<button id="reset">Reset</button>
+</div>
+</section>
+<section class="card">
+<h2>Priemtelfunctie</h2>
+<canvas id="pi"></canvas>
+<div class="row leg">
+<span><i style="background:var(--pi)"></i>π(x) exact</span>
+<span><i style="background:var(--approx)"></i>benadering met verschoven nullen</span>
+<span><i style="background:var(--mut);height:2px"></i>R(x) (zonder nullen)</span>
+</div>
+<div class="row">
+<label>x max <input type="range" id="xmax" min="10" max="300" value="100"><span class="val" id="xmaxV">100</span></label>
+<label>aantal nullen <input type="range" id="nz" min="0" max="100" value="100"><span class="val" id="nzV">100</span></label>
+<label>Re-gevoeligheid <input type="range" id="sens" min="1" max="20" value="1" title="vermenigvuldigt de Re-offset per sleep-pixel"><span class="val" id="sensV">1×</span></label>
+</div>
+</section>
+</main>
+<script>
+const GAMMA=[14.134725142,21.022039639,25.01085758,30.424876126,32.935061588,37.586178159,40.918719012,43.327073281,48.005150881,49.773832478,52.970321478,56.446247697,59.347044003,60.831778525,65.112544048,67.079810529,69.546401711,72.067157674,75.704690699,77.144840069,79.33737502,82.910380854,84.735492981,87.425274613,88.809111208,92.491899271,94.651344041,95.870634228,98.831194218,101.317851006,103.72553804,105.446623052,107.168611184,111.029535543,111.874659177,114.320220915,116.226680321,118.790782866,121.370125002,122.946829294,124.256818554,127.51668388,129.5787042,131.087688531,133.497737203,134.756509753,138.116042055,139.736208952,141.123707404,143.111845808,146.000982487,147.422765343,150.053520421,150.925257612,153.024693811,156.112909294,157.597591818,158.849988171,161.188964138,163.030709687,165.537069188,167.184439978,169.094515416,169.911976479,173.41153652,174.754191523,176.441434298,178.377407776,179.91648402,182.207078484,184.874467848,185.598783678,187.228922584,189.416158656,192.026656361,193.079726604,195.26539668,196.876481841,198.015309676,201.264751944,202.493594514,204.189671803,205.394697202,207.906258888,209.576509717,211.690862595,213.34791936,214.547044783,216.169538508,219.067596349,220.714918839,221.430705555,224.007000255,224.98332467,227.42144428,229.337413306,231.2501887,231.987235253,233.693404179,236.524229666];
+const EULER=0.5772156649015329;
+// ---- complexe hulpfuncties ([re,im]) ----
+function cexp(a,b){const e=Math.exp(a);return [e*Math.cos(b),e*Math.sin(b)]}
+function cmul(a,b,c,d){return [a*c-b*d,a*d+b*c]}
+function cdiv(a,b,c,d){const n=c*c+d*d;return [(a*c+b*d)/n,(b*c-a*d)/n]}
+// E1(z) voor complexe z, via reeks (|z| klein) of kettingbreuk (|z| groot)
+function E1(zr,zi){
+  const m=Math.hypot(zr,zi);
+  if(m<8){
+    // E1 = -gamma - ln z - sum (-z)^k/(k k!)
+    let tr=1,ti=0,sr=0,si=0;
+    for(let k=1;k<80;k++){
+      [tr,ti]=cmul(tr,ti,-zr/k,-zi/k); // (-z)^k/k!
+      sr+=tr/k;si+=ti/k;
+      if(Math.abs(tr)+Math.abs(ti)<1e-17)break;
+    }
+    return [-EULER-Math.log(m)-sr, -Math.atan2(zi,zr)-si];
+  }
+  // modified Lentz voor E1(z)=e^-z * 1/(z+1-1/(z+3-4/(z+5-...)))
+  const tiny=1e-300;
+  let br=zr+1,bi=zi;
+  let cr=1/tiny,ci=0;
+  let [dr,di]=cdiv(1,0,br,bi);
+  let hr=dr,hi=di;
+  for(let i=1;i<200;i++){
+    const an=-i*i;
+    br+=2;
+    // d = 1/(b + an*d)
+    let t=cmul(an*dr,an*di,1,0);
+    [dr,di]=cdiv(1,0,br+t[0],bi+t[1]);
+    // c = b + an/c
+    const q=cdiv(an,0,cr,ci);
+    cr=br+q[0];ci=bi+q[1];
+    const dl=cmul(cr,ci,dr,di);
+    [hr,hi]=cmul(hr,hi,dl[0],dl[1]);
+    if(Math.abs(dl[0]-1)+Math.abs(dl[1])<1e-13)break;
+  }
+  const e=cexp(-zr,-zi);
+  return cmul(e[0],e[1],hr,hi);
+}
+// Li(x^rho) = Ei(rho ln x) = -E1(-rho ln x) (hoofdtak, Im(rho ln x) != 0 → ±iπ correctie)
+function LiPow(rr,ri,lnx){
+  const zr=rr*lnx,zi=ri*lnx;
+  const e=E1(-zr,-zi);
+  // Ei(z) = -E1(-z) + i*pi*sign(Im z)  (voor Im z>0: +iπ)
+  const s=zi>0?1:zi<0?-1:0;
+  return [-e[0],-e[1]+s*Math.PI];
+}
+// Li(x) (reëel, x>1) via Ramanujan-reeks
+function Li(x){
+  if(x<=1)return 0;
+  const l=Math.log(x);
+  let s=0,t=1,f=1;
+  for(let k=1;k<150;k++){t*=l/k;s+=t/k;if(t/k<1e-16*Math.abs(s))break}
+  return EULER+Math.log(l)+s;
+}
+// triviale-nullen term: ∫_x^∞ dt/(t(t²-1)ln t)
+function trivInt(x){
+  const u0=Math.log(x),N=60,U=u0+25,h=(U-u0)/N;
+  const f=u=>1/((Math.exp(2*u)-1)*u);
+  let s=f(u0)+f(U);
+  for(let i=1;i<N;i++)s+=f(u0+i*h)*(i%2?4:2);
+  return s*h/3;
+}
+// Möbius
+const MU=[0,1];
+(function(){for(let n=2;n<=64;n++){let m=n,mu=1;for(let p=2;p*p<=m;p++){if(m%p==0){m/=p;if(m%p==0){mu=0;break}mu=-mu}}if(mu!==0&&m>1)mu=-mu;MU[n]=mu}})();
+// J(x) = Li(x) - Σρ Li(x^ρ) - ln2 + ∫...
+function J(x,zeros){
+  const lnx=Math.log(x);
+  let s=Li(x);
+  for(const z of zeros){
+    // paar ρ en ρ̄ → 2·Re
+    const v=LiPow(z.re,z.im,lnx);
+    s-=2*v[0];
+  }
+  return s-Math.LN2+trivInt(x);
+}
+function Rfun(x){ // Riemann R(x) = Σ μ(n)/n Li(x^{1/n})
+  let s=0;for(let n=1;n<=40;n++){const y=Math.pow(x,1/n);if(y<=1.0001)break;s+=MU[n]/n*Li(y)}return s;
+}
+function piApprox(x,zeros){
+  let s=0;
+  for(let n=1;n<=60;n++){
+    const y=Math.pow(x,1/n);
+    if(y<1.5)break;
+    s+=MU[n]/n*J(y,zeros);
+  }
+  return s;
+}
+// exacte π(x)
+function sieve(N){const a=new Uint8Array(N+1).fill(1);a[0]=a[1]=0;for(let i=2;i*i<=N;i++)if(a[i])for(let j=i*i;j<=N;j+=i)a[j]=0;return a}
+const PR=sieve(400);
+const state={dRe:0,dIm:0,xmax:100,nz:100,sens:1};
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function fit(c){const r=c.getBoundingClientRect(),d=devicePixelRatio||1;c.width=Math.round(r.width*d);c.height=Math.round(r.height*d);const g=c.getContext('2d');g.setTransform(d,0,0,d,0,0);return [g,r.width,r.height]}
+// ---- vlak ----
+const plane=document.getElementById('plane');
+const RE0=-1.5,RE1=2.5,IM=260;
+function drawPlane(){
+  const [g,w,h]=fit(plane);
+  const L=34,B=22,T=8,R=8,pw=w-L-R,ph=h-T-B;
+  const X=r=>L+(r-RE0)/(RE1-RE0)*pw, Y=i=>T+(1-(i+IM)/(2*IM))*ph;
+  g.clearRect(0,0,w,h);
+  g.font='11px system-ui';g.fillStyle=css('--mut');g.strokeStyle=css('--grid');g.lineWidth=1;
+  for(let i=-250;i<=250;i+=50){g.beginPath();g.moveTo(L,Y(i));g.lineTo(L+pw,Y(i));g.stroke();g.textAlign='right';g.fillText(i,L-4,Y(i)+4)}
+  for(let r=-1;r<=2;r+=0.5){g.beginPath();g.moveTo(X(r),T);g.lineTo(X(r),T+ph);g.stroke();g.textAlign='center';g.fillText(r,X(r),h-6)}
+  // assen
+  g.strokeStyle=css('--mut');g.beginPath();g.moveTo(L,Y(0));g.lineTo(L+pw,Y(0));g.moveTo(X(0),T);g.lineTo(X(0),T+ph);g.stroke();
+  // kritieke strook
+  g.fillStyle=css('--crit');g.globalAlpha=.08;g.fillRect(X(0),T,X(1)-X(0),ph);g.globalAlpha=1;
+  g.strokeStyle=css('--crit');g.setLineDash([4,4]);g.beginPath();g.moveTo(X(.5),T);g.lineTo(X(.5),T+ph);g.stroke();g.setLineDash([]);
+  g.fillStyle=css('--mut');g.textAlign='left';g.fillText('Re',L+pw-16,Y(0)-4);g.fillText('Im',X(0)+4,T+10);
+  // nullen
+  g.save();g.beginPath();g.rect(L,T,pw,ph);g.clip();
+  const re=.5+state.dRe;
+  const dot=(r,i,c)=>{g.fillStyle=c;g.beginPath();g.arc(X(r),Y(i),3,0,6.3);g.fill()};
+  for(let k=0;k<100;k++){
+    const used=k<state.nz;
+    dot(re,GAMMA[k]+state.dIm,used?css('--zero'):css('--grid'));
+    dot(re,-(GAMMA[k]+state.dIm),used?css('--zeroc'):css('--grid'));
+  }
+  g.restore();
+}
+function zerosNow(){
+  const z=[];for(let k=0;k<state.nz;k++)z.push({re:.5+state.dRe,im:GAMMA[k]+state.dIm});return z;
+}
+// ---- π ----
+const pic=document.getElementById('pi');
+function drawPi(){
+  const [g,w,h]=fit(pic);
+  const L=44,B=24,T=10,R=10,pw=w-L-R,ph=h-T-B;
+  const xm=state.xmax;
+  const zs=zerosNow();
+  const N=Math.min(500,Math.floor(pw));
+  const xs=[],ap=[],rr=[];
+  for(let i=0;i<=N;i++){const x=2+(xm-2)*i/N;xs.push(x);ap.push(piApprox(x,zs));rr.push(Rfun(x))}
+  const exact=x=>{let c=0;for(let i=2;i<=x;i++)c+=PR[i];return c};
+  const ex=exact(xm);
+  let lo=-2,hi=Math.max(ex*1.15,Math.max(...ap)+1,5);
+  hi=Math.min(hi,ex*3+10);lo=Math.max(Math.min(lo,Math.min(...ap)-1),-ex*2-5);
+  const X=x=>L+(x-0)/xm*pw,Y=v=>T+(1-(v-lo)/(hi-lo))*ph;
+  g.clearRect(0,0,w,h);
+  g.font='11px system-ui';g.fillStyle=css('--mut');g.strokeStyle=css('--grid');g.lineWidth=1;
+  const step=v=>{const r=(v)/6,p=Math.pow(10,Math.floor(Math.log10(r))),m=r/p;return (m<1.5?1:m<3.5?2:m<7.5?5:10)*p};
+  const sy=step(hi-lo);
+  for(let v=Math.ceil(lo/sy)*sy;v<=hi;v+=sy){g.beginPath();g.moveTo(L,Y(v));g.lineTo(L+pw,Y(v));g.stroke();g.textAlign='right';g.fillText(Math.round(v*100)/100,L-4,Y(v)+4)}
+  const sx=step(xm);
+  for(let x=0;x<=xm;x+=sx){g.beginPath();g.moveTo(X(x),T);g.lineTo(X(x),T+ph);g.stroke();g.textAlign='center';g.fillText(x,X(x),h-8)}
+  g.strokeStyle=css('--mut');g.beginPath();g.moveTo(L,Y(0));g.lineTo(L+pw,Y(0));g.stroke();
+  g.save();g.beginPath();g.rect(L,T,pw,ph);g.clip();
+  // R(x)
+  g.strokeStyle=css('--mut');g.lineWidth=1.2;g.beginPath();xs.forEach((x,i)=>{i?g.lineTo(X(x),Y(rr[i])):g.moveTo(X(x),Y(rr[i]))});g.stroke();
+  // exact trap
+  g.strokeStyle=css('--pi');g.lineWidth=2;g.beginPath();
+  let c=0;g.moveTo(X(0),Y(0));
+  for(let n=2;n<=Math.floor(xm);n++){if(PR[n]){g.lineTo(X(n),Y(c));c++;g.lineTo(X(n),Y(c))}}
+  g.lineTo(X(xm),Y(c));g.stroke();
+  // benadering
+  g.strokeStyle=css('--approx');g.lineWidth=2;g.beginPath();xs.forEach((x,i)=>{i?g.lineTo(X(x),Y(ap[i])):g.moveTo(X(x),Y(ap[i]))});g.stroke();
+  g.restore();
+  g.fillStyle=css('--mut');g.textAlign='left';
+  g.fillText(`offset: Re ${state.dRe>=0?'+':''}${state.dRe.toFixed(3)}, Im ${state.dIm>=0?'+':''}${state.dIm.toFixed(2)}  ·  π(${xm}) = ${ex}`,L+6,T+12);
+}
+let pending=false;
+function update(){
+  document.getElementById('oRe').textContent=state.dRe.toFixed(3);
+  document.getElementById('oIm').textContent=state.dIm.toFixed(2);
+  if(pending)return;pending=true;
+  requestAnimationFrame(()=>{pending=false;drawPlane();drawPi()});
+}
+// ---- drag ----
+let drag=null;
+plane.addEventListener('pointerdown',e=>{plane.setPointerCapture(e.pointerId);drag={x:e.clientX,y:e.clientY,re:state.dRe,im:state.dIm};plane.classList.add('drag')});
+plane.addEventListener('pointermove',e=>{
+  if(!drag)return;
+  const r=plane.getBoundingClientRect();
+  const pw=r.width-42,ph=r.height-30;
+  state.dRe=drag.re+(e.clientX-drag.x)/pw*(RE1-RE0)*state.sens/ (state.sens>1?4:1);
+  state.dIm=drag.im-(e.clientY-drag.y)/ph*(2*IM);
+  update();
+});
+const endDrag=()=>{drag=null;plane.classList.remove('drag')};
+plane.addEventListener('pointerup',endDrag);plane.addEventListener('pointercancel',endDrag);
+document.getElementById('reset').onclick=()=>{state.dRe=0;state.dIm=0;update()};
+for(const [id,key,fmt] of [['xmax','xmax',v=>v],['nz','nz',v=>v],['sens','sens',v=>v+'×']]){
+  const el=document.getElementById(id);
+  el.oninput=()=>{state[key]=+el.value;document.getElementById(id+'V').textContent=fmt(el.value);update()};
+}
+addEventListener('resize',update);
+update();
+</script>
+</body>
+</html>
