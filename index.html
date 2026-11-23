@@ -12,13 +12,13 @@ body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,sans
 header{padding:14px 16px 4px}
 h1{margin:0;font-size:19px}
 header p{margin:4px 0 0;color:var(--mut);max-width:90ch}
-main{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:12px;padding:12px 16px 16px}
-@media(max-width:820px){main{grid-template-columns:1fr}}
+main{display:grid;grid-template-columns:minmax(230px,36%) 1fr;grid-template-areas:"plane pi" "pctl ictl";gap:12px;padding:12px 16px 16px}
 .card{background:var(--panel);border:1px solid var(--grid);border-radius:10px;padding:10px}
 .card h2{margin:0 0 6px;font-size:13px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
 canvas{width:100%;display:block;border-radius:6px;touch-action:none}
-#plane{height:520px;cursor:grab}#plane.drag{cursor:grabbing}
-#pi{height:520px}
+#plane{height:clamp(240px,64vh,520px);cursor:grab}#plane.drag{cursor:grabbing}
+#pi{height:clamp(240px,64vh,520px)}
+.card{min-width:0}
 .row{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-top:8px;color:var(--mut)}
 .row label{display:flex;align-items:center;gap:6px}
 input[type=range]{accent-color:var(--acc)}
@@ -27,6 +27,13 @@ button:hover{border-color:var(--acc)}
 .val{color:var(--fg);font-variant-numeric:tabular-nums;min-width:5ch;display:inline-block}
 .leg span{display:inline-flex;align-items:center;gap:5px;margin-right:12px}
 .leg i{width:14px;height:3px;display:inline-block;border-radius:2px}
+@media(max-width:560px) and (orientation:portrait){
+header p{display:none}header{padding-bottom:0}
+main{grid-template-columns:1fr;grid-template-areas:"plane" "pi" "pctl" "ictl";gap:8px;padding:8px 12px 12px}
+#plane,#pi{height:30vh;min-height:190px}
+.card h2{margin-bottom:4px}.leg{font-size:11px;margin-top:4px}
+}
+@media(max-height:480px){header p{display:none}header{padding:6px 16px 0}h1{font-size:15px}main{padding-top:6px}#plane,#pi{height:calc(100vh - 150px);min-height:200px}.card h2{display:none}}
 </style>
 </head>
 <body>
@@ -35,20 +42,12 @@ button:hover{border-color:var(--acc)}
 <p>Links: de eerste 100 niet-triviale nullen ρ = ½ + iγ in het complexe vlak (plus hun spiegelbeeld). <b>Sleep</b> een lege plek om alle nullen te verschuiven, of sleep één punt om alleen die nul te verplaatsen (oranje = gewijzigd). Zoom in met de Im-schuifregelaars om punten te kunnen raken. Rechts: de echte π(x) (trap) en de benadering uit Riemanns expliciete formule met de verschoven nullen.</p>
 </header>
 <main>
-<section class="card">
+<section class="card" style="grid-area:plane">
 <h2>Complex vlak</h2>
 <canvas id="plane"></canvas>
-<div class="row">
-<span>Offset Re: <span class="val" id="oRe">0.000</span></span>
-<span>Im: <span class="val" id="oIm">0.00</span></span>
-<button id="reset">Reset alles</button>
-<button id="resetSel">Reset punt</button>
-</div>
-<div class="row"><label>Im-venster midden <input type="range" id="vc" min="-250" max="250" value="0" step="1"><span class="val" id="vcV">0</span></label>
-<label>hoogte <input type="range" id="vs" min="20" max="520" value="520" step="1"><span class="val" id="vsV">520</span></label></div>
 <div class="row" id="selInfo" style="font-variant-numeric:tabular-nums"></div>
 </section>
-<section class="card">
+<section class="card" style="grid-area:pi">
 <h2>Priemtelfunctie</h2>
 <canvas id="pi"></canvas>
 <div class="row leg">
@@ -56,7 +55,19 @@ button:hover{border-color:var(--acc)}
 <span><i style="background:var(--approx)"></i>benadering met verschoven nullen</span>
 <span><i style="background:var(--mut);height:2px"></i>R(x) (zonder nullen)</span>
 </div>
-<div class="row">
+</section>
+<section class="card" style="grid-area:pctl">
+<div class="row" style="margin-top:0">
+<span>Offset Re: <span class="val" id="oRe">0.000</span></span>
+<span>Im: <span class="val" id="oIm">0.00</span></span>
+<button id="reset">Reset alles</button>
+<button id="resetSel">Reset punt</button>
+</div>
+<div class="row"><label>Im-venster midden <input type="range" id="vc" min="-250" max="250" value="0" step="1"><span class="val" id="vcV">0</span></label>
+<label>hoogte <input type="range" id="vs" min="20" max="520" value="520" step="1"><span class="val" id="vsV">520</span></label></div>
+</section>
+<section class="card" style="grid-area:ictl">
+<div class="row" style="margin-top:0">
 <label>x max <input type="range" id="xmax" min="10" max="300" value="100"><span class="val" id="xmaxV">100</span></label>
 <label>aantal nullen <input type="range" id="nz" min="0" max="100" value="100"><span class="val" id="nzV">100</span></label>
 <label>Re-gevoeligheid <input type="range" id="sens" min="1" max="20" value="1" title="vermenigvuldigt de Re-offset per sleep-pixel"><span class="val" id="sensV">1×</span></label>
